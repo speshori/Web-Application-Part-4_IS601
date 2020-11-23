@@ -78,7 +78,7 @@ def form_delete_post(sell):
     return redirect("/", code=302)
 
 
-@app.route('/api/v1/cities', methods=['GET'])
+@app.route('/api/v1/homes', methods=['GET'])
 def api_browse() -> str:
     cursor = mysql.get_db().cursor()
     cursor.execute('SELECT * FROM homes')
@@ -88,31 +88,52 @@ def api_browse() -> str:
     return resp
 
 
-@app.route('/api/v1/cities/<int:city_id>', methods=['GET'])
-def api_retrieve(city_id) -> str:
+@app.route('/api/v1/homes/<string:sell>', methods=['GET'])
+def api_retrieve(sell) -> str:
     cursor = mysql.get_db().cursor()
-    cursor.execute('SELECT * FROM homes WHERE id=%s', city_id)
+    cursor.execute('SELECT * FROM homes WHERE Sell=%s', sell)
     result = cursor.fetchall()
     json_result = json.dumps(result);
     resp = Response(json_result, status=200, mimetype='application/json')
     return resp
 
 
-@app.route('/api/v1/cities/', methods=['POST'])
+@app.route('/api/v1/homes', methods=['POST'])
 def api_add() -> str:
+    content = request.json
+    cursor = mysql.get_db().cursor()
+    inputData = (content['Sell'], content['List'], content['Living'],
+                 content['Rooms'], content['Beds'], content['Baths'],
+                 content['Age'], content['Acres'], content['Taxes'])
+    sql_insert_query = """INSERT INTO homes (Sell,List,Living,Rooms,Beds,Baths,Age,Acres,Taxes) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) """
+    cursor.execute(sql_insert_query, inputData)
+    mysql.get_db().commit()
     resp = Response(status=201, mimetype='application/json')
     return resp
 
 
-@app.route('/api/v1/cities/<int:city_id>', methods=['PUT'])
-def api_edit(city_id) -> str:
-    resp = Response(status=201, mimetype='application/json')
+@app.route('/api/v1/homes/<string:sell>', methods=['PUT'])
+def api_edit(sell) -> str:
+    cursor = mysql.get_db().cursor()
+    content = request.json
+    inputData = (content['Sell'], content['List'], content['Living'],
+                 content['Rooms'], content['Beds'], content['Baths'],
+                 content['Age'], content['Acres'], content['Taxes'], sell)
+    sql_update_query = """UPDATE homes t SET t.Sell = %s, t.List = %s, t.Living = %s, t.Rooms = 
+        %s, t.Beds = %s, t.Baths = %s, t.Age = %s, t.Acres = %s, t.Taxes = %s WHERE t.Sell = %s """
+    cursor.execute(sql_update_query, inputData)
+    mysql.get_db().commit()
+    resp = Response(status=200, mimetype='application/json')
     return resp
 
 
-@app.route('/api/cities/<int:city_id>', methods=['DELETE'])
-def api_delete(city_id) -> str:
-    resp = Response(status=210, mimetype='application/json')
+@app.route('/api/v1/homes/<string:sell>', methods=['DELETE'])
+def api_delete(sell) -> str:
+    cursor = mysql.get_db().cursor()
+    sql_delete_query = """DELETE FROM homes WHERE Sell = %s """
+    cursor.execute(sql_delete_query, sell)
+    mysql.get_db().commit()
+    resp = Response(status=200, mimetype='application/json')
     return resp
 
 
